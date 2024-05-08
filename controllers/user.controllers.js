@@ -1,5 +1,5 @@
 const csvtojson = require("csvtojson");
-const JSONdata = require("../jsondata/file.json");
+const JSONdata = require("../data.json");
 const userModel = require("../models/user");
 const Stripe = require("stripe");
 const data = require("../data.json");
