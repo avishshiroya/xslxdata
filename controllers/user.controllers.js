@@ -7,7 +7,7 @@ const testModel = require("../models/test");
 const jsonStream = require("JSONStream");
 const fs = require("fs");
 const admzip = require("adm-zip");
-const archiver = require('archiver')
+const archiver = require("archiver");
 const stripe = Stripe(
   "sk_test_51P5gL8SEVqunBl3hKmiwrKankEgXveoEBWPY9tRZfESZkt9CkPpx4eWYl4b2GK9PbiZMruHSXRERpkFTZN4dN6O400GDnqUEwC"
 );
@@ -229,13 +229,17 @@ const unzipTheFile = async (req, res) => {
   try {
     const file = req.file;
     console.log(file);
+    const filePath = [];
     const unzip = new admzip(req.file.buffer);
-    await unzip.extractAllTo(`./public/${req.body.name}/${req.body.lang}`)
+    unzip.extractAllTo(`./public/${req.body.name}/${req.body.lang}`);
+    unzip.forEach((entry) => {
+      filePath.push(`/${req.body.name}/${req.body.lang}/` + entry.entryName);
+    });
     res.status(200).json({
       status: "success",
       message: "Data Added",
-      data: [],
-    }); 
+      data: filePath,
+    });
   } catch (error) {
     console.log(error);
     return res.status(500).json({
@@ -246,60 +250,58 @@ const unzipTheFile = async (req, res) => {
   }
 };
 
-const createCbz= async(req,res)=>{
+const createCbz = async (req, res) => {
+  // Directory containing your images
+  const imageDir = "./public/comics/av";
 
-// Directory containing your images
-const imageDir = './public/comics/av';
+  // Output CBZ file name
+  const cbzFile = "./comic.cbz";
 
-// Output CBZ file name
-const cbzFile = './comic.cbz';
-
-// Create a new ZIP archive
-const output = fs.createWriteStream(cbzFile);
-const archive = archiver('zip', {
-  zlib: { level: 9 } // Set compression level
-});
-
-// Listen for archive warnings
-archive.on('warning', function(err) {
-  if (err.code === 'ENOENT') {
-    // log warning
-    console.warn(err);
-  } else {
-    // throw error
-    throw err;
-  }
-});
-
-// Listen for when the archive has been finalized
-output.on('close', function() {
-  console.log(archive.pointer() + ' total bytes');
-  console.log('CBZ file created successfully.');
-});
-
-// Listen for errors
-archive.on('error', function(err) {
-  throw err;
-});
-
-// Pipe archive data to the output file
-archive.pipe(output);
-
-// Add images to the archive
-fs.readdir(imageDir, (err, files) => {
-  if (err) throw err;
-  files.forEach(file => {
-    archive.file(`${imageDir}/${file}`, { name: file });
+  // Create a new ZIP archive
+  const output = fs.createWriteStream(cbzFile);
+  const archive = archiver("zip", {
+    zlib: { level: 9 }, // Set compression level
   });
 
-  // Finalize the archive
-  archive.finalize();
-});
-res.status(200).json({
-  message:'cbz created'
-})
+  // Listen for archive warnings
+  archive.on("warning", function (err) {
+    if (err.code === "ENOENT") {
+      // log warning
+      console.warn(err);
+    } else {
+      // throw error
+      throw err;
+    }
+  });
 
-}
+  // Listen for when the archive has been finalized
+  output.on("close", function () {
+    console.log(archive.pointer() + " total bytes");
+    console.log("CBZ file created successfully.");
+  });
+
+  // Listen for errors
+  archive.on("error", function (err) {
+    throw err;
+  });
+
+  // Pipe archive data to the output file
+  archive.pipe(output);
+
+  // Add images to the archive
+  fs.readdir(imageDir, (err, files) => {
+    if (err) throw err;
+    files.forEach((file) => {
+      archive.file(`${imageDir}/${file}`, { name: file });
+    });
+
+    // Finalize the archive
+    archive.finalize();
+  });
+  res.status(200).json({
+    message: "cbz created",
+  });
+};
 
 module.exports = {
   getFileAddData,
@@ -309,5 +311,5 @@ module.exports = {
   uploadData,
   testData,
   unzipTheFile,
-  createCbz
+  createCbz,
 };
